@@ -15,85 +15,86 @@ import io
 try:
     from statsmodels.stats.outliers_influence import variance_inflation_factor
     from statsmodels.stats.diagnostic import het_breuschpagan
+    import statsmodels.api as sm
     statsmodels_available = True
 except ImportError:
     statsmodels_available = False
     st.warning("Modul 'statsmodels' tidak tersedia. Uji multikolinearitas (VIF) dan homoskedastisitas (Breusch-Pagan) tidak dapat dilakukan. Silakan instal statsmodels dengan 'pip install statsmodels'.")
 
-# Default dataset (dari dataset_padi.csv) jika tidak ada file diunggah
+# Dataset dari dataset_padi_combined.csv (hanya 2019-2024)
 csv_data = """Tahun,Bulan,Curah_Hujan,Suhu,Produksi
-2019,1,141,25.2,6.81
-2019,2,317,32.8,7.27
-2019,3,245,24.5,8.25
-2019,4,275,29.0,7.2
-2019,5,251,29.3,7.44
-2019,6,243,26.0,7.59
-2019,7,200,27.7,7.35
-2019,8,307,29.3,7.84
-2019,9,149,29.1,5.94
-2019,10,200,26.6,6.95
-2019,11,238,28.4,7.41
-2019,12,256,25.7,8.27
-2020,1,279,25.2,8.76
-2020,2,228,32.4,6.45
-2020,3,146,30.7,5.59
-2020,4,251,32.0,6.96
-2020,5,303,29.3,8.13
-2020,6,90,29.7,4.69
-2020,7,286,29.0,7.58
-2020,8,204,28.6,6.78
-2020,9,250,28.4,7.87
-2020,10,316,28.1,8.52
-2020,11,157,31.1,5.31
-2020,12,213,32.2,6.19
-2021,1,316,29.4,8.11
-2021,2,274,32.0,6.92
-2021,3,243,27.1,7.75
-2021,4,293,26.5,8.28
-2021,5,124,24.1,7.04
-2021,6,124,27.2,6.1
-2021,7,195,30.8,6.36
-2021,8,295,29.2,7.96
-2021,9,219,29.9,6.93
-2021,10,316,26.8,8.54
-2021,11,216,26.8,7.13
-2021,12,121,28.3,6.14
-2022,1,301,26.9,8.78
-2022,2,185,32.7,5.46
-2022,3,213,29.1,7.01
-2022,4,198,28.9,6.67
-2022,5,157,31.9,5.32
-2022,6,128,24.9,6.48
-2022,7,99,27.3,5.97
-2022,8,242,27.4,8.1
-2022,9,132,26.3,6.73
-2022,10,167,28.7,6.6
-2022,11,255,28.7,6.99
-2022,12,255,25.1,8.64
-2023,1,306,28.0,8.29
-2023,2,108,24.5,6.89
-2023,3,138,30.8,5.48
-2023,4,175,28.5,6.26
-2023,5,157,26.3,6.79
-2023,6,126,30.3,5.98
-2023,7,209,30.1,6.21
-2023,8,278,31.0,7.25
-2023,9,215,25.9,7.72
-2023,10,90,28.4,5.46
-2023,11,106,26.5,5.87
-2023,12,262,24.0,8.41
-2024,1,180,25.2,7.36
-2024,2,241,26.6,7.79
-2024,3,252,29.0,7.42
-2024,4,103,24.9,6.58
-2024,5,148,29.1,5.77
-2024,6,246,25.3,8.31
-2024,7,295,27.7,8.03
-2024,8,311,30.0,8.26
-2024,9,319,24.1,9.2
-2024,10,266,30.3,7.36
-2024,11,168,33.0,5.76
-2024,12,131,25.5,7.15"""
+2019,1,293.25,25.675,6.81
+2019,2,353.75,25.725,7.27
+2019,3,240.5,25.6,8.25
+2019,4,450.25,26.625,7.2
+2019,5,212.0,26.55,7.44
+2019,6,56.5,26.35,7.59
+2019,7,25.25,26.225,7.35
+2019,8,47.25,25.675,7.84
+2019,9,53.25,26.175,5.94
+2019,10,161.5,26.775,6.95
+2019,11,203.25,26.55,7.41
+2019,12,393.25,25.775,8.27
+2020,1,151.0,31.5,4.53
+2020,2,203.0,25.1,5.47
+2020,3,284.0,24.9,7.3
+2020,4,189.0,31.9,4.35
+2020,5,159.0,26.1,5.87
+2020,6,108.0,26.2,5.08
+2020,7,246.0,29.8,5.88
+2020,8,174.0,31.5,5.01
+2020,9,263.0,31.2,5.68
+2020,10,192.0,26.3,5.65
+2020,11,209.0,28.4,5.93
+2020,12,268.0,25.4,7.2
+2021,1,167.0,23.8,6.04
+2021,2,227.0,23.075,5.23
+2021,3,294.0,24.425,6.03
+2021,4,214.0,24.925,5.57
+2021,5,121.0,25.35,5.2
+2021,6,281.0,24.475,5.86
+2021,7,126.0,23.8,5.21
+2021,8,291.0,24.7,5.96
+2021,9,160.0,24.625,5.65
+2021,10,116.0,24.825,4.09
+2021,11,257.0,24.45,5.38
+2021,12,136.0,24.125,4.49
+2022,1,151.25,25.975,4.05
+2022,2,231.625,25.575,6.04
+2022,3,271.275,24.8,6.4
+2022,4,384.95,25.725,5.05
+2022,5,190.35,24.95,4.95
+2022,6,243.325,24.925,6.25
+2022,7,191.65,24.225,6.31
+2022,8,171.425,24.125,6.33
+2022,9,200.85,24.375,5.75
+2022,10,428.675,25.325,6.0
+2022,11,321.75,24.45,6.76
+2022,12,290.75,24.45,5.18
+2023,1,242.0,27.0,6.27
+2023,2,185.0,26.6,5.47
+2023,3,285.0,28.3,6.59
+2023,4,185.0,26.0,5.37
+2023,5,269.0,30.6,5.51
+2023,6,107.0,30.2,4.14
+2023,7,207.0,29.0,6.19
+2023,8,154.0,25.1,6.27
+2023,9,243.0,31.8,4.66
+2023,10,244.0,27.2,6.26
+2023,11,118.0,27.5,4.65
+2023,12,157.0,31.3,5.0
+2024,1,180.0,25.2,7.36
+2024,2,241.0,26.6,7.79
+2024,3,252.0,29.0,7.42
+2024,4,103.0,24.9,6.58
+2024,5,148.0,29.1,5.77
+2024,6,246.0,25.3,8.31
+2024,7,295.0,27.7,8.03
+2024,8,311.0,30.0,8.26
+2024,9,319.0,24.1,9.2
+2024,10,266.0,30.3,7.36
+2024,11,168.0,33.0,5.76
+2024,12,131.0,25.5,7.15"""
 
 # Streamlit App
 st.title("🌾 Sistem Prediksi Produksi Padi Berdasarkan Curah Hujan & Suhu")
@@ -114,22 +115,25 @@ if uploaded_file is not None:
         required_columns = ['Curah_Hujan', 'Suhu', 'Produksi']
         if not all(col in df.columns for col in required_columns):
             st.error("File CSV harus memiliki kolom: Curah_Hujan, Suhu, Produksi")
-            df = pd.read_csv(StringIO(csv_data))  # Kembali ke default dataset jika gagal
+            df = pd.read_csv(StringIO(csv_data))  # Kembali ke dataset_padi_combined.csv jika gagal
         else:
             st.sidebar.success("Dataset berhasil diunggah!")
     except Exception as e:
         st.error(f"Error membaca file CSV: {e}")
-        df = pd.read_csv(StringIO(csv_data))  # Kembali ke default dataset jika gagal
+        df = pd.read_csv(StringIO(csv_data))  # Kembali ke dataset_padi_combined.csv jika gagal
 else:
-    df = pd.read_csv(StringIO(csv_data))  # Gunakan default dataset jika tidak ada file diunggah
+    df = pd.read_csv(StringIO(csv_data))  # Gunakan dataset_padi_combined.csv
+
+# Filter data untuk tahun 2019-2024
+df = df[df['Tahun'] >= 2019]
 
 # Preprocessing: Validasi data
 if df[['Curah_Hujan', 'Suhu', 'Produksi']].isnull().any().any():
     st.error("Dataset mengandung nilai kosong. Harap periksa data.")
     df = df.dropna()  # Hapus baris dengan missing values
-if (df['Curah_Hujan'] < 0).any() or (df['Suhu'] < 20).any() or (df['Suhu'] > 40).any() or (df['Produksi'] < 0).any():
-    st.warning("Dataset mengandung nilai tidak realistis (Curah Hujan < 0, Suhu < 20°C atau > 40°C, Produksi < 0). Data akan difilter.")
-    df = df[(df['Curah_Hujan'] >= 0) & (df['Suhu'].between(20, 40)) & (df['Produksi'] >= 0)]
+if (df['Curah_Hujan'] < 0).any() or (df['Produksi'] < 0).any():
+    st.warning("Dataset mengandung nilai tidak realistis (Curah Hujan < 0 atau Produksi < 0). Data akan difilter.")
+    df = df[(df['Curah_Hujan'] >= 0) & (df['Produksi'] >= 0)]
 
 # Preprocessing: Normalisasi data
 scaler = StandardScaler()
@@ -155,15 +159,15 @@ if r2 < 0.7:
 
 # Input prediksi di sidebar
 st.sidebar.title("Input Prediksi")
-curah_hujan = st.sidebar.number_input("Curah Hujan (mm)", min_value=0.0, max_value=500.0, value=200.0)
-suhu = st.sidebar.number_input("Suhu (°C)", min_value=20.0, max_value=40.0, value=28.0)
+curah_hujan = st.sidebar.number_input("Curah Hujan (mm)", value=200.0)
+suhu = st.sidebar.number_input("Suhu (°C)", value=28.0)
 predict_button = st.sidebar.button("Prediksi")
 
 # Prediksi logic
 if predict_button:
     # Validasi input pengguna
-    if curah_hujan < 0 or suhu < 20 or suhu > 40:
-        st.error("Input tidak valid: Curah Hujan harus ≥ 0 mm, Suhu harus antara 20-40°C.")
+    if curah_hujan < 0:
+        st.error("Input tidak valid: Curah Hujan harus ≥ 0 mm.")
     else:
         input_data = scaler.transform(np.array([[curah_hujan, suhu]]))
         prediksi = model.predict(input_data)[0]
@@ -173,7 +177,7 @@ if predict_button:
 
 # Main Area
 if page == "📊 Dataset":
-    st.header("Preview Dataset")
+    st.header("Preview Dataset (2019-2024)")
     st.dataframe(df.head(20))  # Tampilkan 20 baris pertama sebagai preview
     st.write("Total entri: ", len(df))
     st.write("**Statistik Deskriptif**")
@@ -194,7 +198,7 @@ elif page == "🧮 Evaluasi Model":
     st.write(f"- **Intercept ({round(model.intercept_, 3)})**: Nilai dasar produksi padi (ton/ha) ketika curah hujan dan suhu dalam skala ternormalisasi bernilai 0.")
     st.write(f"- **Koefisien Curah Hujan ({round(model.coef_[0], 4)})**: Setiap peningkatan satu unit curah hujan (dalam skala ternormalisasi) meningkatkan produksi padi sebesar {round(model.coef_[0], 4)} ton/ha, dengan asumsi suhu tetap. Ini menunjukkan curah hujan yang lebih tinggi mendukung hasil panen yang lebih baik.")
     st.write(f"- **Koefisien Suhu ({round(model.coef_[1], 3)})**: Setiap peningkatan satu unit suhu (dalam skala ternormalisasi) menurunkan produksi padi sebesar {round(abs(model.coef_[1]), 3)} ton/ha, dengan asumsi curah hujan tetap. Ini menunjukkan suhu tinggi dapat mengurangi hasil panen.")
-    st.write("**Implikasi Praktis**: Petani dapat menggunakan model ini untuk memperkirakan produksi dan menyesuaikan waktu tanam berdasarkan prakiraan curah hujan dan suhu, misalnya, menghindari penanaman pada periode suhu ekstrem (>35°C).")
+    st.write("**Implikasi Praktis**: Petani dapat menggunakan model ini untuk memperkirakan produksi dan menyesuaikan waktu tanam berdasarkan prakiraan curah hujan dan suhu, misalnya, menghindari penanaman pada periode suhu ekstrem.")
 
     # Uji multikolinearitas (VIF)
     st.subheader("Uji Multikolinearitas (VIF)")
@@ -221,7 +225,6 @@ elif page == "🧮 Evaluasi Model":
     # Uji homoskedastisitas (Breusch-Pagan)
     st.subheader("Uji Homoskedastisitas (Breusch-Pagan)")
     if statsmodels_available:
-        import statsmodels.api as sm
         X_test_with_const = sm.add_constant(X_test)
         _, pval, _, _ = het_breuschpagan(residuals, X_test_with_const)
         st.write(f"**P-value Breusch-Pagan**: {round(pval, 3)}")
@@ -261,7 +264,7 @@ elif page == "🔮 Prediksi Baru":
         # Rekomendasi aplikatif
         st.subheader("Rekomendasi")
         if prediksi < 5:
-            st.write("- **Produksi Rendah**: Pertimbangkan untuk memastikan drainase yang baik jika curah hujan tinggi, atau tambahkan irigasi jika curah hujan rendah. Hindari penanaman pada suhu ekstrem (>35°C).")
+            st.write("- **Produksi Rendah**: Pertimbangkan untuk memastikan drainase yang baik jika curah hujan tinggi, atau tambahkan irigasi jika curah hujan rendah. Perhatikan suhu ekstrem.")
         elif 5 <= prediksi <= 6:
             st.write("- **Produksi Sedang**: Kondisi iklim saat ini mendukung produksi sedang. Pastikan pengelolaan air dan pemupukan optimal untuk meningkatkan hasil.")
         else:
