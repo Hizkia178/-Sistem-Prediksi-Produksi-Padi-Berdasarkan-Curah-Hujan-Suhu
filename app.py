@@ -124,9 +124,6 @@ if uploaded_file is not None:
 else:
     df = pd.read_csv(StringIO(csv_data))  # Gunakan dataset_padi_combined.csv
 
-# Filter data untuk tahun 2019-2024
-df = df[df['Tahun'] >= 2019]
-
 # Preprocessing: Validasi data
 if df[['Curah_Hujan', 'Suhu', 'Produksi']].isnull().any().any():
     st.error("Dataset mengandung nilai kosong. Harap periksa data.")
@@ -178,7 +175,7 @@ if predict_button:
 # Main Area
 if page == "📊 Dataset":
     st.header("Preview Dataset (2019-2024)")
-    st.dataframe(df.head(20))  # Tampilkan 20 baris pertama sebagai preview
+    st.dataframe(df)  # Tampilkan semua data
     st.write("Total entri: ", len(df))
     st.write("**Statistik Deskriptif**")
     st.dataframe(df.describe())
